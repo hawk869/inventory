@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Service
+@Service @Transactional
 public class CategoryServiceImpl implements ICategoryService{
 
     private final ICategoryDao categoryDao;
@@ -59,6 +59,29 @@ public class CategoryServiceImpl implements ICategoryService{
         }
         catch (Exception e){
             responseRest.setMetadata("Respuesta nok", "-1", "Error al consultar por id");
+            e.getStackTrace();
+            return new ResponseEntity<>(responseRest, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>(responseRest, HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<CategoryResponseRest> save(Category category) {
+        CategoryResponseRest responseRest = new CategoryResponseRest();
+        List<Category> categoryList = new ArrayList<>();
+
+        try {
+            Category categorySaved = categoryDao.save(category);
+            if(categorySaved != null){
+                categoryList.add(categorySaved);
+                responseRest.getCategoryResponse().setCategories(categoryList);
+            }else {
+                responseRest.setMetadata("Respuesta nok", "-1", "Categoria no guardada");
+                return new ResponseEntity<>(responseRest, HttpStatus.BAD_REQUEST);
+            }
+        }
+        catch (Exception e){
+            responseRest.setMetadata("Respuesta nok", "-1", "Error al guardar la categoria");
             e.getStackTrace();
             return new ResponseEntity<>(responseRest, HttpStatus.INTERNAL_SERVER_ERROR);
         }
