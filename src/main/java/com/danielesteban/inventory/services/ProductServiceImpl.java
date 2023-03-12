@@ -5,15 +5,17 @@ import com.danielesteban.inventory.dao.IProductDao;
 import com.danielesteban.inventory.model.Category;
 import com.danielesteban.inventory.model.Product;
 import com.danielesteban.inventory.response.ProductResponseRest;
+import com.danielesteban.inventory.util.Util;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Service
+@Service @Transactional
 public class ProductServiceImpl implements IProductService {
 
     private final ICategoryDao categoryDao;
@@ -49,5 +51,30 @@ public class ProductServiceImpl implements IProductService {
 
         }
         return new ResponseEntity<>(responseRest, HttpStatus.CREATED);
+    }
+
+    @Override @Transactional(readOnly = true)
+    public ResponseEntity<ProductResponseRest> searchById(Long id) {
+        ProductResponseRest responseRest = new ProductResponseRest();
+        List<Product> productList = new ArrayList<>();
+        try {
+            Optional<Product> product = productDao.findById(id);
+            if (product.isPresent()){
+                byte[] imageDecompressed = Util.decompressZLib(product.get().getPhoto());
+                product.get().setPhoto(imageDecompressed);
+                productList.add(product.get());
+                responseRest.getProductResponse().setProducts(productList);
+                responseRest.setMetadata("Respuesta ok", "00", "Producto encontrado");
+            }
+            else {
+                responseRest.setMetadata("Respuesta nok", "-1", "Producto no encontrado");
+                return new ResponseEntity<>(responseRest, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e){
+            e.getStackTrace();
+            responseRest.setMetadata("Respuesta nok", "-1", "Error al buscar producto");
+            return new ResponseEntity<>(responseRest, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>(responseRest, HttpStatus.OK);
     }
 }

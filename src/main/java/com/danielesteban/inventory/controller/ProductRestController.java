@@ -36,4 +36,8 @@ public class ProductRestController {
 
         return productService.save(product, categoryId);
     }
+    @GetMapping("/products/{id}")
+    public ResponseEntity<?> findById(@PathVariable Long id){
+        return productService.searchById(id);
+    }
 }
