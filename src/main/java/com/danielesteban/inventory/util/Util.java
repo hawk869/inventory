@@ -31,9 +31,12 @@ public class Util {
 
     // uncompress the image bytes before returning it to the angular application
     public static byte[] decompressZLib(byte[] data) {
+        byte[] noData = new byte[0];
         Inflater inflater = new Inflater();
         inflater.setInput(data);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+        if (data.length == 0)
+            return noData;
         byte[] buffer = new byte[1024];
         try {
             while (!inflater.finished()) {
