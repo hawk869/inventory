@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,6 +65,34 @@ public class ProductServiceImpl implements IProductService {
                 product.get().setPhoto(imageDecompressed);
                 productList.add(product.get());
                 responseRest.getProductResponse().setProducts(productList);
+                responseRest.setMetadata("Respuesta ok", "00", "Producto encontrado");
+            }
+            else {
+                responseRest.setMetadata("Respuesta nok", "-1", "Producto no encontrado");
+                return new ResponseEntity<>(responseRest, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e){
+            e.getStackTrace();
+            responseRest.setMetadata("Respuesta nok", "-1", "Error al buscar producto");
+            return new ResponseEntity<>(responseRest, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>(responseRest, HttpStatus.OK);
+    }
+
+    @Override @Transactional(readOnly = true)
+    public ResponseEntity<ProductResponseRest> searchByName(String name) {
+        ProductResponseRest responseRest = new ProductResponseRest();
+        List<Product> productList;
+        List<Product> products = new ArrayList<>();
+        try {
+            productList = productDao.findByNameContainingIgnoreCase(name);
+            if (!productList.isEmpty()){
+                productList.forEach(p -> {
+                    byte[] imageDecompressed = Util.decompressZLib(p.getPhoto());
+                    p.setPhoto(imageDecompressed);
+                    products.add(p);
+                });
+                responseRest.getProductResponse().setProducts(products);
                 responseRest.setMetadata("Respuesta ok", "00", "Producto encontrado");
             }
             else {
