@@ -52,4 +52,21 @@ public class ProductRestController {
     public ResponseEntity<?> getAllProducts(){
         return productService.getAllProducts();
     }
+    @PutMapping("/products/{productId}")
+    public ResponseEntity<?> updateProduct(
+            @RequestParam MultipartFile photo,
+            @RequestParam String name,
+            @RequestParam int price,
+            @RequestParam int quantity,
+            @RequestParam Long categoryId,
+            @PathVariable Long productId) throws IOException {
+
+        Product product = new Product();
+        product.setName(name);
+        product.setPrice(price);
+        product.setQuantity(quantity);
+        product.setPhoto(Util.compressZLib(photo.getBytes()));
+
+        return productService.updateProduct(product, categoryId, productId);
+    }
 }

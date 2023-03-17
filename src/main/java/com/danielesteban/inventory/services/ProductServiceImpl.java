@@ -148,4 +148,41 @@ public class ProductServiceImpl implements IProductService {
         }
         return new ResponseEntity<>(responseRest, HttpStatus.OK);
     }
+
+    @Override
+    public ResponseEntity<ProductResponseRest> updateProduct(Product product, Long categoryId, Long productId) {
+        ProductResponseRest responseRest = new ProductResponseRest();
+        List<Product> products = new ArrayList<>();
+        try {
+            Optional<Category> category = categoryDao.findById(categoryId);
+//            category.ifPresent(product::setCategory);
+            if (category.isPresent())
+                product.setCategory(category.get());
+            else {
+                responseRest.setMetadata("Respuesta nok", "-1", "La categoria no se encuentra");
+                return new ResponseEntity<>(responseRest, HttpStatus.NOT_FOUND);
+            }
+            Optional<Product> optionalProduct = productDao.findById(productId);
+            if (optionalProduct.isPresent()){
+                optionalProduct.get().setQuantity(product.getQuantity());
+                optionalProduct.get().setPrice(product.getPrice());
+                optionalProduct.get().setName(product.getName());
+                optionalProduct.get().setPhoto(product.getPhoto());
+                optionalProduct.get().setCategory(product.getCategory());
+                productDao.save(optionalProduct.get());
+
+                products.add(optionalProduct.get());
+                responseRest.getProductResponse().setProducts(products);
+                responseRest.setMetadata("Respuesta ok", "00", "Producto actualizado");
+            }
+            else {
+                responseRest.setMetadata("Respuesta nok", "-1", "No se encuentra el producto");
+                return new ResponseEntity<>(responseRest, HttpStatus.NOT_FOUND);
+            }
+        }
+        catch (Exception e){
+            e.getStackTrace();
+        }
+        return new ResponseEntity<>(responseRest, HttpStatus.OK);
+    }
 }
