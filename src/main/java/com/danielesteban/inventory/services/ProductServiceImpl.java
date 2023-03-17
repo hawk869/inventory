@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -117,6 +116,34 @@ public class ProductServiceImpl implements IProductService {
         catch (Exception e){
             e.getStackTrace();
             responseRest.setMetadata("Respuesta nok", "-1", "Error al eliminar producto");
+            return new ResponseEntity<>(responseRest, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>(responseRest, HttpStatus.OK);
+    }
+
+    @Override @Transactional(readOnly = true)
+    public ResponseEntity<ProductResponseRest> getAllProducts() {
+        ProductResponseRest responseRest = new ProductResponseRest();
+        List<Product> products = new ArrayList<>();
+        List<Product> productList;
+        try {
+            productList = (List<Product>) productDao.findAll();
+            if (productList.size() > 0){
+                productList.forEach(p -> {
+                    byte[] imageDecompressed = Util.decompressZLib(p.getPhoto());
+                    p.setPhoto(imageDecompressed);
+                    products.add(p);
+                });
+                responseRest.getProductResponse().setProducts(products);
+                responseRest.setMetadata("Respuesta ok", "00", "Productos encontrados");
+            } else {
+                responseRest.setMetadata("Respuesta nok", "-1", "Productos no encontrados");
+                return new ResponseEntity<>(responseRest, HttpStatus.NOT_FOUND);
+            }
+        }
+        catch (Exception e){
+            e.getStackTrace();
+            responseRest.setMetadata("Respuesta nok", "-1", "Error al buscar productos");
             return new ResponseEntity<>(responseRest, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<>(responseRest, HttpStatus.OK);
