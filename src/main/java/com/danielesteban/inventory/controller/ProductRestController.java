@@ -1,13 +1,17 @@
 package com.danielesteban.inventory.controller;
 
 import com.danielesteban.inventory.model.Product;
+import com.danielesteban.inventory.response.ProductResponseRest;
 import com.danielesteban.inventory.services.IProductService;
+import com.danielesteban.inventory.util.ProductExcelExporter;
 import com.danielesteban.inventory.util.Util;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Objects;
 
 @CrossOrigin(origins = {"http://localhost:4200"})
 @RestController
@@ -68,5 +72,17 @@ public class ProductRestController {
         product.setPhoto(Util.compressZLib(photo.getBytes()));
 
         return productService.updateProduct(product, categoryId, productId);
+    }
+    @GetMapping("/products/export/excel")
+    public  void exportToExcel(HttpServletResponse response) throws IOException{
+        response.setContentType("application/octet-stream");
+        String headerKey = "Content-Disposition";
+        String headerValue = "attachment; filename=result_product";
+        response.setHeader(headerKey, headerValue);
+
+        ResponseEntity<ProductResponseRest> productResponse = productService.getAllProducts();
+        ProductExcelExporter excelExporter;
+        excelExporter = new ProductExcelExporter(Objects.requireNonNull(productResponse.getBody()).getProductResponse().getProducts());
+        excelExporter.export(response);
     }
 }
